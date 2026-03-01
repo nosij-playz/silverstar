@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>C.D.A Silver Star - Cinematic Reveal</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Anek+Malayalam:wght@400;600&family=Playfair+Display:ital,wght@1,600&family=Cinzel:wght@600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-deep: #020d10;
+            --bg-light: #0a2e36;
+            --gold-light: #fbe69b;
+            --gold-core: #f2c94c;
+            --gold-dark: #a67c00;
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: var(--bg-deep);
+            overflow: hidden; 
+            font-family: 'Anek Malayalam', sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Ambient Animated Background */
+        .ambient-bg {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: radial-gradient(circle at 50% 50%, var(--bg-light) 0%, var(--bg-deep) 100%);
+            z-index: 1;
+        }
+
+        /* Hardware Accelerated Particle Canvas */
+        #particle-engine {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 2; pointer-events: none; mix-blend-mode: screen;
+        }
+
+        /* Screen Controller */
+        .screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; z-index: 10;
+            padding: 20px; box-sizing: border-box; text-align: center;
+            /* Faster transition to fit the 2-second window */
+            filter: blur(20px) brightness(0);
+            transform: scale(1.1);
+            transition: all 1s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        .screen.active {
+            opacity: 1; pointer-events: auto;
+            filter: blur(0px) brightness(1);
+            transform: scale(1);
+        }
+
+        /* 1. Presents Screen */
+        .cinematic-title {
+            font-family: 'Cinzel', serif; font-size: 28px; font-weight: 800;
+            background: linear-gradient(to bottom, #fff, var(--gold-core), var(--gold-dark));
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+            letter-spacing: 4px; line-height: 1.5;
+            text-shadow: 0 10px 30px rgba(242, 201, 76, 0.3);
+        }
+        .presents {
+            margin-top: 15px; font-family: 'Cinzel', serif; color: #fff;
+            font-size: 12px; letter-spacing: 12px; opacity: 0.6; text-transform: uppercase;
+        }
+
+        /* 2 & 3. Quotes */
+        .quote-wrapper { border-left: 2px solid var(--gold-core); padding-left: 20px; text-align: left; }
+        .quote-en { font-family: 'Playfair Display', serif; font-size: 32px; color: var(--gold-light); font-style: italic; line-height: 1.3;}
+        .quote-ml { font-family: 'Anek Malayalam', sans-serif; font-size: 28px; color: var(--gold-light); font-weight: 600; line-height: 1.5;}
+        .author { margin-top: 20px; font-size: 14px; color: #aaa; letter-spacing: 2px; text-transform: uppercase; }
+
+        /* 4. The Grand Reveal */
+        .poster-wrapper {
+            position: relative;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.9), 0 0 40px rgba(242, 201, 76, 0.3);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid rgba(242, 201, 76, 0.4);
+        }
+        
+        .main-img {
+            display: block; width: 100%; max-width: 400px;
+            /* Ken Burns Effect */
+            animation: slow-zoom 20s linear forwards;
+        }
+        @keyframes slow-zoom { 0% { transform: scale(1); } 100% { transform: scale(1.15); } }
+
+        .coming-soon-glowing {
+            margin-top: 30px; font-family: 'Cinzel', serif; font-size: 24px; font-weight: 800;
+            letter-spacing: 8px; color: #fff; text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(255,255,255,0.8), 0 0 20px var(--gold-core), 0 0 40px var(--gold-dark);
+            animation: pulse-glow 2s ease-in-out infinite alternate;
+        }
+        @keyframes pulse-glow { 
+            from { opacity: 0.8; filter: drop-shadow(0 0 5px var(--gold-core)); }
+            to { opacity: 1; filter: drop-shadow(0 0 15px #fff); }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="epicAudio" src="music.mp3" loop></audio>
+    <div class="ambient-bg"></div>
+    <canvas id="particle-engine"></canvas>
+
+    <div id="ui-layer">
+        
+        <div id="step-1" class="screen active">
+            <div>
+                <div class="cinematic-title">SILVER STAR<br>CDA VANITHA SANGAM</div>
+                <div class="presents">Presents</div>
+            </div>
+        </div>
+
+        <div id="step-2" class="screen">
+            <div class="quote-wrapper">
+                <div class="quote-en">"There is no limit to what we, as women, can accomplish."</div>
+                <div class="author">— Michelle Obama</div>
+            </div>
+        </div>
+
+        <div id="step-3" class="screen">
+            <div class="quote-wrapper">
+                <div class="quote-ml">"സ്ത്രീകളായ നമുക്ക് നേടാൻ കഴിയുന്ന കാര്യങ്ങൾക്ക് യാതൊരു അതിരുകളുമില്ല."</div>
+                <div class="author">— മിഷേൽ ഒബാമ</div>
+            </div>
+        </div>
+
+        <div id="step-4" class="screen">
+            <div class="poster-wrapper">
+                <img src="silver star.png" alt="Silver Star Event" class="main-img">
+            </div>
+            <div class="coming-soon-glowing">Coming Soon</div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- 1. Master Timeline Controller ---
+        // Exactly 2 seconds (2000ms) per frame
+        const timeline = [
+            { id: 'step-2', delay: 5000 },    // Switch to English Quote at 2s
+            { id: 'step-3', delay: 10900 },    // Switch to Malayalam Quote at 4s
+            { id: 'step-4', delay: 17000 }     // Epic Drop/Poster Reveal at 6s
+        ];
+
+        window.onload = () => {
+            // Audio Trigger (Browsers will likely block this without a click)
+            const audio = document.getElementById('epicAudio');
+            audio.volume = 0.8;
+            
+            // We try to play it anyway, and catch the error silently if the browser blocks it.
+            let playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.warn("Browser blocked auto-play. User interaction is required for audio.");
+                });
+            }
+
+            // Also allow the user to trigger audio if they touch the screen anywhere
+            document.body.addEventListener('click', () => {
+                if(audio.paused) audio.play();
+            }, { once: true });
+
+            // Fire the timeline engine automatically
+            timeline.forEach(scene => {
+                setTimeout(() => {
+                    // Turn off all screens
+                    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                    // Turn on current scene
+                    document.getElementById(scene.id).classList.add('active');
+                    
+                    // Boost particles on the final epic reveal
+                    if(scene.id === 'step-4') triggerExplosion();
+                    
+                }, scene.delay);
+            });
+        };
+
+        // --- 2. Advanced Physics Particle Engine ---
+        const canvas = document.getElementById('particle-engine');
+        const ctx = canvas.getContext('2d');
+        let width, height, particles = [];
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Track touch/mouse for interactive particles
+        document.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
+        document.addEventListener('touchmove', e => { mouseX = e.touches[0].clientX; mouseY = e.touches[0].clientY; });
+
+        class Particle {
+            constructor(isExplosion = false) {
+                this.x = isExplosion ? width/2 : Math.random() * width;
+                this.y = isExplosion ? height/2 : Math.random() * height;
+                this.size = Math.random() * 2.5 + 0.5;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 1) * 0.8;
+                this.life = Math.random() * 0.5 + 0.3;
+                
+                if (isExplosion) {
+                    this.vx = (Math.random() - 0.5) * 15;
+                    this.vy = (Math.random() - 0.5) * 15;
+                    this.size = Math.random() * 4 + 1;
+                }
+            }
+
+            update() {
+                let dx = mouseX - this.x;
+                let dy = mouseY - this.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < 150) {
+                    this.x -= dx * 0.005;
+                    this.y -= dy * 0.005;
+                }
+
+                this.x += this.vx;
+                this.y += this.vy;
+
+                if (this.y < 0) this.y = height;
+                if (this.x < 0) this.x = width;
+                if (this.x > width) this.x = 0;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(242, 201, 76, ${this.life})`;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#f2c94c';
+                ctx.fill();
+            }
+        }
+
+        for (let i = 0; i < 80; i++) particles.push(new Particle());
+
+        function triggerExplosion() {
+            for (let i = 0; i < 150; i++) particles.push(new Particle(true));
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach((p, index) => {
+                p.update();
+                p.draw();
+                if(Math.abs(p.vx) > 1) p.vx *= 0.95;
+                if(Math.abs(p.vy) > 1) p.vy *= 0.95;
+            });
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+    </script>
+</body>
+</html>

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>C.D.A Silver Star - Cinematic Reveal</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Anek+Malayalam:wght@400;600&family=Playfair+Display:ital,wght@1,600&family=Cinzel:wght@600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Anek+Malayalam:wght@400;600;800&family=Playfair+Display:ital,wght@1,600&family=Cinzel:wght@600;800&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -44,7 +44,6 @@
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             opacity: 0; pointer-events: none; z-index: 10;
             padding: 20px; box-sizing: border-box; text-align: center;
-            /* Faster transition to fit the 2-second window */
             filter: blur(20px) brightness(0);
             transform: scale(1.1);
             transition: all 1s cubic-bezier(0.19, 1, 0.22, 1);
@@ -75,21 +74,74 @@
         .quote-ml { font-family: 'Anek Malayalam', sans-serif; font-size: 28px; color: var(--gold-light); font-weight: 600; line-height: 1.5;}
         .author { margin-top: 20px; font-size: 14px; color: #aaa; letter-spacing: 2px; text-transform: uppercase; }
 
-        /* 4. The Grand Reveal */
+        /* 4. The Grand Reveal & 3D Flip Card */
         .poster-wrapper {
             position: relative;
+            width: 100%; max-width: 380px;
+            animation: slow-zoom 20s linear forwards;
+            perspective: 1500px;
+        }
+        @keyframes slow-zoom { 0% { transform: scale(0.95); } 100% { transform: scale(1.1); } }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            transition: transform 1.5s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            cursor: pointer;
             box-shadow: 0 30px 60px rgba(0,0,0,0.9), 0 0 40px rgba(242, 201, 76, 0.3);
             border-radius: 15px;
+        }
+
+        .flip-card-inner.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front, .flip-card-back {
+            width: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            border: 2px solid rgba(242, 201, 76, 0.5);
             overflow: hidden;
-            border: 1px solid rgba(242, 201, 76, 0.4);
         }
-        
+
+        .flip-card-front {
+            position: relative;
+            display: flex;
+        }
+
+        .flip-card-back {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            transform: rotateY(180deg);
+            display: flex;
+            background-color: var(--bg-deep);
+        }
+
         .main-img {
-            display: block; width: 100%; max-width: 400px;
-            /* Ken Burns Effect */
-            animation: slow-zoom 20s linear forwards;
+            display: block; 
+            width: 100%; 
+            height: 100%;
+            object-fit: cover; /* Ensures both images fill the card perfectly */
         }
-        @keyframes slow-zoom { 0% { transform: scale(1); } 100% { transform: scale(1.15); } }
+
+        .tap-hint-overlay {
+            position: absolute;
+            bottom: 15px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 12px;
+            color: rgba(255,255,255,0.8);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            animation: pulse-op 2s infinite;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            z-index: 10;
+        }
+
+        @keyframes pulse-op { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
 
         .coming-soon-glowing {
             margin-top: 30px; font-family: 'Cinzel', serif; font-size: 24px; font-weight: 800;
@@ -134,7 +186,20 @@
 
         <div id="step-4" class="screen">
             <div class="poster-wrapper">
-                <img src="silver star.png" alt="Silver Star Event" class="main-img">
+                
+                <div class="flip-card-inner" id="invite-card" onclick="flipCard()">
+                    
+                    <div class="flip-card-front">
+                        <img src="silver star.png" alt="Silver Star Event" class="main-img">
+                    </div>
+
+                    <div class="flip-card-back">
+                        <img src="flip.png" alt="Program Schedule" class="main-img">
+                        <div class="tap-hint-overlay">Tap to flip</div>
+                    </div>
+
+                </div>
+
             </div>
             <div class="coming-soon-glowing">Coming Soon</div>
         </div>
@@ -142,48 +207,54 @@
     </div>
 
     <script>
-        // --- 1. Master Timeline Controller ---
-        // Exactly 2 seconds (2000ms) per frame
+        // --- Master Timeline Controller ---
         const timeline = [
-            { id: 'step-2', delay: 3000 },    // Switch to English Quote at 2s
-            { id: 'step-3', delay: 8900 },    // Switch to Malayalam Quote at 4s
-            { id: 'step-4', delay: 17000 }     // Epic Drop/Poster Reveal at 6s
+            { id: 'step-2', delay: 3000 },    
+            { id: 'step-3', delay: 8900 },    
+            { id: 'step-4', delay: 17000 }    
         ];
 
+        // Automatic Flip Timing (5 seconds after the poster appears)
+        const autoFlipDelay = 17000 + 8000; 
+
         window.onload = () => {
-            // Audio Trigger (Browsers will likely block this without a click)
             const audio = document.getElementById('epicAudio');
             audio.volume = 0.8;
             
-            // We try to play it anyway, and catch the error silently if the browser blocks it.
             let playPromise = audio.play();
             if (playPromise !== undefined) {
                 playPromise.catch(error => {
-                    console.warn("Browser blocked auto-play. User interaction is required for audio.");
+                    console.warn("Browser blocked auto-play. User interaction required.");
                 });
             }
 
-            // Also allow the user to trigger audio if they touch the screen anywhere
             document.body.addEventListener('click', () => {
                 if(audio.paused) audio.play();
             }, { once: true });
 
-            // Fire the timeline engine automatically
             timeline.forEach(scene => {
                 setTimeout(() => {
-                    // Turn off all screens
                     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-                    // Turn on current scene
                     document.getElementById(scene.id).classList.add('active');
                     
-                    // Boost particles on the final epic reveal
                     if(scene.id === 'step-4') triggerExplosion();
                     
                 }, scene.delay);
             });
+
+            // Automatically flip the card to show programs
+            setTimeout(() => {
+                document.getElementById('invite-card').classList.add('flipped');
+            }, autoFlipDelay);
         };
 
-        // --- 2. Advanced Physics Particle Engine ---
+        // Allow user to manually flip the card by tapping it
+        function flipCard() {
+            const card = document.getElementById('invite-card');
+            card.classList.toggle('flipped');
+        }
+
+        // --- Advanced Physics Particle Engine ---
         const canvas = document.getElementById('particle-engine');
         const ctx = canvas.getContext('2d');
         let width, height, particles = [];
@@ -197,7 +268,6 @@
         window.addEventListener('resize', resize);
         resize();
 
-        // Track touch/mouse for interactive particles
         document.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
         document.addEventListener('touchmove', e => { mouseX = e.touches[0].clientX; mouseY = e.touches[0].clientY; });
 
@@ -261,7 +331,6 @@
             requestAnimationFrame(animate);
         }
         animate();
-
     </script>
 </body>
 </html>

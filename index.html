@@ -74,22 +74,28 @@
         .quote-ml { font-family: 'Anek Malayalam', sans-serif; font-size: 28px; color: var(--gold-light); font-weight: 600; line-height: 1.5;}
         .author { margin-top: 20px; font-size: 14px; color: #aaa; letter-spacing: 2px; text-transform: uppercase; }
 
-        /* 4. The Grand Reveal & 3D Flip Card */
+        /* 4. The Grand Reveal & 3D Flip Card - MOBILE OPTIMIZED */
         .poster-wrapper {
             position: relative;
-            width: 100%; max-width: 380px;
+            width: 85vw; 
+            max-width: 350px;
+            max-height: 60vh;
+            aspect-ratio: 3 / 4; 
+            margin: 0 auto; 
             animation: slow-zoom 20s linear forwards;
             perspective: 1500px;
         }
+
         @keyframes slow-zoom { 0% { transform: scale(0.95); } 100% { transform: scale(1.1); } }
 
         .flip-card-inner {
             position: relative;
             width: 100%;
-            transition: transform 1.5s cubic-bezier(0.4, 0.2, 0.2, 1);
+            height: 100%;
+            transition: transform 1.2s cubic-bezier(0.4, 0.2, 0.2, 1);
             transform-style: preserve-3d;
             cursor: pointer;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.9), 0 0 40px rgba(242, 201, 76, 0.3);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(242, 201, 76, 0.3);
             border-radius: 15px;
         }
 
@@ -98,32 +104,33 @@
         }
 
         .flip-card-front, .flip-card-back {
+            position: absolute; 
+            top: 0; left: 0; right: 0; bottom: 0;
             width: 100%;
+            height: 100%;
             -webkit-backface-visibility: hidden;
             backface-visibility: hidden;
             border-radius: 15px;
             border: 2px solid rgba(242, 201, 76, 0.5);
             overflow: hidden;
+            background-color: var(--bg-deep);
         }
 
         .flip-card-front {
-            position: relative;
-            display: flex;
+            transform: rotateY(0deg); 
         }
 
         .flip-card-back {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
             transform: rotateY(180deg);
-            display: flex;
-            background-color: var(--bg-deep);
+            display: flex; 
         }
 
         .main-img {
             display: block; 
             width: 100%; 
             height: 100%;
-            object-fit: cover; /* Ensures both images fill the card perfectly */
+            object-fit: cover; 
+            object-position: center; 
         }
 
         .tap-hint-overlay {
